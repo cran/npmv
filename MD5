@@ -1,0 +1,8 @@
+c4a80dd268873396621404f28fe81ed0 *DESCRIPTION
+d2d5ac3741917d768bbaa4637b4a522f *NAMESPACE
+44ac709629c95c6dc4f3f38e41b8b1ea *R/basenonpartest.R
+e2ca8f11f3881d13468eab964429f3d1 *R/nonpartest.R
+2b528a89b41c1e33024220baecc5af7a *data/sberry.rda
+b0d2b2a5b021af3dfc38f0c52bbba08b *man/nonpartest.Rd
+56cd7c4e57d76a264f6a39d218043d46 *man/npmv-package.Rd
+ac16ab6d81eac23425a2690e7e26dc77 *man/sberry.Rd

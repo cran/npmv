@@ -1,45 +1,39 @@
-\name{nonpartest}
-\alias{nonpartest}
+\name{ssnonpartest}
+\alias{ssnonpartest}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Nonparametric Comparison of Multivariate Samples
+Nonparametric Comparison of Multivariate Samples Using Subset algorithm
 }
 \description{
-Performs analysis of one-way multivariate data using nonparametric techniques developed since 2008. Allows for small samples and ordinal variables, or even mixture of the different variable types ordinal, quantitative, binary. Using F-approximations for ANOVA Type, Wilks' Lambda Type, Lawley Hotelling Type, and Bartlett Nanda Pillai Type test statics, as well as a permutation test for each, the package compares the multivariate distributions of the different samples. Also computes nonparametric relative effects.
+Performs analysis of one-way multivariate data using nonparametric techniques developed since 2008. Allows for small samples and ordinal variables, or even mixture of the different variable types ordinal, quantitative, binary. Using F-approximations for ANOVA Type, Wilks' Lambda Type, Lawley Hotelling Type, and Bartlett Nanda Pillai Type test statics. The function compares the multivariate distributions of the different samples using the subset algorithm to determine which of the variables/factors differ from one another.  The algorithm follows the closed multiple testing principle. 
 }
 \usage{
-nonpartest(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,
-          tests=c(1,1,1,1),releffects=TRUE)
+ssnonpartest(formula,data,alpha=.05,test=c(1,0,0,0),factors.and.variables=FALSE)
 }
 
 \arguments{
-\item{formula}{
+ \item{formula}{
 an object of class "formula",  with a single explanatory variable and multiple response variables (or one that can be coerced to that class).
 }
   \item{data}{
 an object of class "data.frame", containing the variables in the formula. 
 }
-  \item{permtest}{
-logical.  If TRUE the p-values for the permutation test are returned
+  \item{alpha}{
+numerical. Gives the level of significance at which hypothesis test are to be performed. 
 }
-  \item{permreps}{
-number of replications in permutation test
+  \item{test}{
+vector of zeros and ones which specifies which test statistic is  to be calculated. A 1 corresponds to the test statistic which is to be returned.  Only one test statistic can be specified.  Default is for the F approximation of the ANOVA type statistic to be calculated. The order of the test statistics is: ANOVA type, Lawley Hotelling type (McKeon's F approximation), Bartlett-Nanda-Pillai type (Muller's F approximation), and Wilks' Lambda type. 
 }
-  \item{plots}{
-logical. If TRUE box plots are produced for each response variable versus treatment
+  \item{factors.and.variables}{
+logical. If TRUE subset algorithm is ran both by factor levels and by variable.  Default is FALSE.
 }
-  \item{tests}{
-vector of zeros and ones which specifies which test statistics are to be calculated. A 1 corresponds to the test statistics which are to be returned
-}
-  \item{releffects}{
-logical.  If TRUE the relative effects are returned
-}
+
 }
 \details{
 The nonparametric methods implemented in the code have been developed for complete data with no missing values.  The code automatically produces a warning if there is missing data.
 }
 \value{
-Returns a list of 2 data frames if relative effects are turned on, otherwise returns a single data frame.  First data frame consist of p-values for test statistics and permutation test (if permutation test is turned on), second data frame consist of relative effects for each response variable. 
+Returns  the subsections which are significant. 
 }
 \references{
 Arne C. Bathke , Solomon W. Harrar, and Laurence V. 
@@ -103,7 +97,8 @@ Under certain conditions, the matrices H and G are singular (See literature for 
 
 \examples{
 data(sberry)
-nonpartest(weight|bot|fungi|rating~treatment,sberry,permreps=1000)
+ssnonpartest(weight|bot|fungi|rating~treatment,sberry,test=c(1,0,0,0),alpha=.05,
+            factors.and.variables=TRUE)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

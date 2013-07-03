@@ -1,8 +1,18 @@
-nonpartest <- function(frame,groupvar=names(frame)[1],vars=names(frame)[2:length(names(frame))],permtest=TRUE,permreps=10000,plots=TRUE,tests=c(1,1,1,1),releffects=TRUE){
+nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,tests=c(1,1,1,1),releffects=TRUE){
 
-   if(!is.data.frame(frame)){
-      return('Error: Please give a data frame')
-   }
+#Checks to see if formula
+  if(!is(formula,"formula")){
+    return('Error: Please give a formula')
+  }  
+  
+#Creates the data frame
+  formula=Formula(formula)
+  frame=model.frame(formula,data=data)
+ 
+  #Assigns group variable and response variables
+  groupvar.location=length(frame[1,])
+  groupvar=names(frame)[groupvar.location]
+  vars=names(frame)[1:(groupvar.location-1)]
 
    if(sum(is.na(frame))>0)
    {

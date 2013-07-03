@@ -4,7 +4,7 @@
 \docType{package}
 \title{Nonparametric Comparison of Multivariate Samples}
 \description{
-Performs analysis of one-way multivariate data using nonparametric techniques developed since 2008. Allows for small samples and ordinal variables, or even mixture of the different variable types ordinal, quantitative, binary. Using F-approximations for ANOVA Type, Wilk's Lambda Type, Lawley Hotelling Type, and Bartlett Nanda Pillai Type test statics, as well as a permutation test for each, the package compares the multvariate distributions of the different samples. Also computes nonparametric relative effects and produces plots.
+Performs analysis of one-way multivariate data using nonparametric techniques developed since 2008. Allows for small samples and ordinal variables, or even mixture of the different variable types ordinal, quantitative, binary. Using F-approximations for ANOVA Type, Wilks' Lambda Type, Lawley Hotelling Type, and Bartlett Nanda Pillai Type test statics, as well as a permutation test for each, the package compares the multivariate distributions of the different samples. Also computes nonparametric relative effects and produces plots.
 }
 \details{
 \tabular{ll}{
@@ -14,12 +14,12 @@ Version: \tab 1.0\cr
 Date: \tab 2012-07-03\cr
 License: \tab GPL-2\cr
 }
-This package allows the use of basetest and nonpartest, both R functions used to compute nonparametric test statistics, their permutation test analogs, and calculate nonparametric relative effects. See the examples below for some basic uses and look in the help pages for each function for a much more detailed look.
+This package allows the use of nonpartest and ssnonpartest, both R functions used to compute nonparametric test statistics. The function nonpartest computes the nonparmetric test statistics, their permutation test analogs, and calculate nonparametric relative effects. The function ssnonpartest performs an all-subset algorithm regarding the variables and factor levels.  See the examples below for some basic uses and look in the help pages for each function for a much more detailed look.
 }
 \author{
 Woodrow Burchett, Amanda Ellis, Arne Bathke
 
-Maintainer: Woodrow Burchett <woodrow.burchett@uky.edu>
+Maintainer: Woodrow Burchett <woodrow.burchett@uky.edu> 
 
 }
 \references{
@@ -45,10 +45,12 @@ Horst, L.E., Locke, J., Krause, C.R., McMahaon, R.W., Madden, L.V., Hoitink, H.A
 \section{Warning}{
 The nonparametric methods implemented in the code have been developed for complete data with no missing values.The code automatically produces a warning if there is missing data.
 
-Under certain conditions, the matrices H and G are singular (See litature for explanation of H and G), for example when the number of response variables exceeds the sample size.  When this happens, only the ANOVA type statistic can be computed. The code automatically produces a warning if H or G are singular.
+Under certain conditions, the matrices H and G are singular (See literature for explanation of H and G), for example when the number of response variables exceeds the sample size.  When this happens, only the ANOVA type statistic can be computed. The code automatically produces a warning if H or G are singular.
 }
 
 \examples{
 data(sberry)
-nonpartest(sberry,group='treatment',vars=c('weight','bot','fungi','rating'),permreps=1000)
+nonpartest(weight|bot|fungi|rating~treatment,sberry,permreps=1000)
+ssnonpartest(weight|bot|fungi|rating~treatment,sberry,test=c(1,0,0,0),alpha=.05,
+            factors.and.variables=TRUE)
 }

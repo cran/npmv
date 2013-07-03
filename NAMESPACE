@@ -1,1 +1,1 @@
-export(nonpartest)
+export(nonpartest,ssnonpartest)

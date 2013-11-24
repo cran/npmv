@@ -2,7 +2,11 @@
 # Step 3: Test all remaing subsets per closed multiple testing principle
 
 
-ssnonpartest <- function(formula,data,alpha=.05,test=c(1,0,0,0),factors.and.variables=FALSE){
+ssnonpartest <- function(formula,data,alpha=.05,test=c(0,0,0,1),factors.and.variables=FALSE){
+
+##########################################################################################
+#Sets up data from formula, and other checks before subset algorthim can be performed
+##########################################################################################
 
 #Checks to see if formula
   if(!is(formula,"formula")){
@@ -49,8 +53,72 @@ ssnonpartest <- function(formula,data,alpha=.05,test=c(1,0,0,0),factors.and.vari
 
 #Defines logical variable that tells when to exit
   exit=FALSE
+
+#Checks to see if R Matrix is singular, if so returns warning
+  # Compute sample sizes per group
+  N <- length(frame[,1])
+  ssize <- array(NA,a)
+  lims <- matrix(NA,2,a)
+  for(i in 1:a){
+    ssize[i] <- length(frame[frame[,groupvar]==levels(frame[,groupvar])[i],1])
+    lims[1,i] <- min(which(frame[,groupvar]==levels(frame[,groupvar])[i]))
+    lims[2,i] <- max(which(frame[,groupvar]==levels(frame[,groupvar])[i]))
+  }
+
+  if(sum(ssize<2)>0){return('Error: Each group must have sample size of at least 2')}
   
-# Step 1: Test the Global Hypothesis 
+  # Sets up R matrix
+  Rmat <- matrix(NA,N,p)
+
+  for(j in 1:p){
+    Rmat[,j] <- rank(frame[,vars[j]],ties.method="average")
+  }
+
+  # Manipulating R
+
+  Rbars <- matrix(NA,a,p)
+  for(i in 1:a){
+    for(j in 1:p){
+      Rbars[i,j] <- mean(Rmat[(lims[1,i]:lims[2,i]),j])
+    }
+  }
+
+  Rtilda <- (1/a)*colSums(Rbars)
+  Rbarovr <- (1/N)*colSums(Rmat)
+
+  H1 <- matrix(0,p,p)
+  H2 <- matrix(0,p,p)
+  G1 <- matrix(0,p,p)
+  G2 <- matrix(0,p,p)
+  G3 <- matrix(0,p,p)
+  for(i in 1:a){
+    H1 <- H1 + ssize[i]*(Rbars[i,] - Rbarovr)%*%t(Rbars[i,] -Rbarovr)
+    H2 <- H2 + (Rbars[i,] - Rtilda)%*%t(Rbars[i,] - Rtilda)
+    for(j in 1:ssize[i]){
+      G1 <- G1 + (((Rmat[(lims[1,i]+j-1),(1:p)])-Rbars[i,])%*%t((Rmat[(lims[1,i]+j-1),(1:p)])-Rbars[i,]))
+      G2 <- G2 + (1-(ssize[i]/N))*(1/(ssize[i]-1))*(((Rmat[(lims[1,i]+j-1),(1:p)])-Rbars[i,])%*%t((Rmat[(lims[1,i]+j-1),(1:p)])-Rbars[i,]))
+      G3 <- G3 + (1/(ssize[i]*(ssize[i]-1)))*(((Rmat[(lims[1,i]+j-1),(1:p)])-Rbars[i,])%*%t((Rmat[(lims[1,i]+j-1),(1:p)])-Rbars[i,]))
+    }
+  }
+  
+  if(det(H1)==0 | det(H2)==0 | det(G1)==0 | det(G2)==0 | det(G3)==0 && test[1]!=1){
+    return('Rank Matrix is Singular, only ANOVA test can be calculated')
+    tests=c(1,0,0,0)
+  }
+  H1 <- (1/(a-1))*H1
+  H2 <- (1/(a-1))*H2
+  G1 <- (1/(N-a))*G1
+  G2 <- (1/(a-1))*G2
+  G3 <- (1/a)*G3
+
+  if(det(H1)==0 | det(H2)==0 | det(G1)==0 | det(G2)==0 | det(G3)==0 && test[1]!=1){
+  return('Rank Matrix is Singular, only ANOVA test can be calculated')
+  tests=c(1,0,0,0)
+  }
+  
+#######################
+#Global Hypothesis Test
+####################### 
  
    base <- basenonpartest(frame,groupvar,vars,tests=test)
    if (test[1]==1){testpval=base$pvalanova}
@@ -61,44 +129,70 @@ ssnonpartest <- function(formula,data,alpha=.05,test=c(1,0,0,0),factors.and.vari
    if( testpval < alpha) {cat('The Global Hypothesis is significant, subset algorithm will continue \n')
    } else {return ('The Global Hypothesis is not significant, subset algorithm will not continue')}
 
+
+#######################
 #Algorithm for when p>a
-if(p>a || factors.and.variables==TRUE){
-cat('\n~Performing the Subset Algorithm based on Factor levels~\nThe Hypothesis between factor levels ', levels, 'is significant  \n')
-# Step 2: Subset Algorithm for Testing Factor Levels with 1 factor removed, returns matrix where the rows are subsets(size a-1) that are significant
-#Creates new matrix of all possible intersections and finds which are signficant, creates new matrix of significant subsets
+#######################
+  
+if(p>a || factors.and.variables==TRUE){  #Only runs if user wants to check subsets of factor levels
+  
+#Since the Global hypothesis is significant outputs first subset, which is the subset of all factor levels
+cat('\n~Performing the Subset Algorithm based on Factor levels~\n The Hypothesis of equality between factor levels ', levels, 'is rejected \n')
 
-#Test each of the a-1 subgroups, creates list of a-1 groups which are significant
-step2subsets=vector("list",a)
-for(i in 1:a)
-  {
-  subsetframe <-subset(frame, frame[,groupvar] != levels[i])
-  subsetframe<- droplevels(subsetframe)
-  groupvarsub=names(subsetframe)[groupvar.location]
-  base <- basenonpartest(subsetframe,groupvarsub,vars,tests=test)
-   if (test[1]==1){testpval=base$pvalanova}
-   if (test[2]==1){testpval=base$pvalLH}
-   if (test[3]==1){testpval=base$pvalBNP}
-   if (test[4]==1){testpval=base$pvalWL}
-   
-
-   if( testpval < alpha) {step2subsets[[i]]=levels(subsetframe[,groupvarsub])}
-    else{step2subsets[[i]]=NA}
-   if( testpval < alpha) {cat('The Hypothesis between factor levels ', siglevels=levels[-i], 'is significant  \n')}
-  }
-
-step2subsets=step2subsets[!is.na(step2subsets)]
-
-if (length(step2subsets)<= 1 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
-if (length(step2subsets)<= 1 && factors.and.variables==TRUE){
+#Exit if only 2 factor levels are being tested
+if (length(levels)<= 2 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+if (length(levels)<= 2 && factors.and.variables==TRUE){
   cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
   exit=TRUE}
 
-#Creates a new list of all the possible intersections of the previous significant subsets
+# Step 2: Subset Algorithm for Testing Factor Levels with 1 factor removed, returns matrix where the rows are subsets(size a-1) that are significant
+
+#Creates new matrix of all possible intersections and finds which are signficant, creates new matrix of significant subsets
 if(exit==FALSE){
-step2subsetcount=length(step2subsets)
-num.intersections=((step2subsetcount-1)*step2subsetcount)/2
-newsubsets=vector("list",num.intersections)
-k=1   
+
+  #Test each of the a-1 subgroups, creates list of a-1 groups which are significant
+  step2subsets=vector("list",a)
+  for(i in 1:a)
+    {
+    subsetframe <-subset(frame, frame[,groupvar] != levels[i])
+    subsetframe<- droplevels(subsetframe)
+    groupvarsub=names(subsetframe)[groupvar.location]
+    base <- basenonpartest(subsetframe,groupvarsub,vars,tests=test)
+      if (test[1]==1){testpval=base$pvalanova}
+      if (test[2]==1){testpval=base$pvalLH}
+      if (test[3]==1){testpval=base$pvalBNP}
+      if (test[4]==1){testpval=base$pvalWL}
+   
+
+      if( testpval < alpha) {step2subsets[[i]]=levels(subsetframe[,groupvarsub])}
+      else{step2subsets[[i]]=NA}
+      if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', siglevels=levels[-i], 'is rejected  \n')}
+      }
+
+      step2subsets=step2subsets[!is.na(step2subsets)] #Step 2 subsets will be of length a-1
+
+  #Checks to see if there are step2subs and if there is only one step 2 subset in either case exit is set to TRUE
+    if (length(step2subsets)<= 1 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(step2subsets)<= 1 && factors.and.variables==TRUE){
+    cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
+    exit=TRUE}
+ 
+}
+
+#Checks to see if the significant subsets are of length 2, if length 2 or less, if length 2 or less function is done checking factor levels
+if(exit==FALSE){
+    if (length(step2subsets[[1]])<= 2 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(step2subsets[[1]])<= 2 && factors.and.variables==TRUE){
+        cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
+        exit=TRUE}
+}
+
+#Creates a new list of all the possible intersections of the previous significant subsets, step2subsets
+if(exit==FALSE){
+  step2subsetcount=length(step2subsets)
+  num.intersections=((step2subsetcount-1)*step2subsetcount)/2
+  newsubsets=vector("list",num.intersections)
+  k=1   
    for(i in 1:(step2subsetcount-1)){
      h=i+1
       for(j in h:step2subsetcount){
@@ -107,12 +201,12 @@ k=1
       }
    }  
   
-
-#Creates a list of significant subsets and non-significant subsets
-newsubsetcount=length(newsubsets)
-sigfactorsubsets=vector("list",newsubsetcount)
-nonsigfactorsubsets=vector("list",newsubsetcount)
-for(i in 1:newsubsetcount)
+  
+  #Creates a list of significant subsets and non-significant subsets
+  newsubsetcount=length(newsubsets)
+  sigfactorsubsets=vector("list",newsubsetcount)
+  nonsigfactorsubsets=vector("list",newsubsetcount)
+  for(i in 1:newsubsetcount)
    {
      subsetstotest=as.factor(newsubsets[[i]])
      subsetframe <-subset(frame, frame[,groupvar] %in% subsetstotest)
@@ -124,68 +218,81 @@ for(i in 1:newsubsetcount)
      if (test[3]==1){testpval=base$pvalBNP}
      if (test[4]==1){testpval=base$pvalWL}
      
-     if( testpval > alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{nonsigfactorsubsets[[i]]=NA}
+     if( testpval >= alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{nonsigfactorsubsets[[i]]=NA}
      if( testpval < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{sigfactorsubsets[[i]]=NA}
-     if( testpval < alpha) {cat('The Hypothesis between factor levels ', newsubsets[[i]], 'is significant  \n')}
+     if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
    }
    nonsigfactorsubsets=nonsigfactorsubsets[!is.na(nonsigfactorsubsets)]
    sigfactorsubsets=sigfactorsubsets[!is.na(sigfactorsubsets)]
+  
+    #Checks to see if there are step2subs and if there is only one significant subset in either case exit is set to TRUE 
+    if (length(sigfactorsubsets)<= 1 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(sigfactorsubsets)<= 1 && factors.and.variables==TRUE){
+      cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
+      exit=TRUE}
+}
 
-   if (length(sigfactorsubsets)<= 1 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
-   if (length(sigfactorsubsets)<= 1 && factors.and.variables==TRUE){
+#Checks to see if the significant subsets are of length 2, if length 2 or less if length 2 or less function is done checking factor levels
+if(exit==FALSE){
+   if (length(sigfactorsubsets[[1]])<= 2 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+   if (length(sigfactorsubsets[[1]])<= 2 && factors.and.variables==TRUE){
      cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
      exit=TRUE}
 }
+
+
 #Step 3: Reads in the significant and non significant subsets, intersects the significant sets, checks to see if intersection is 
 # non-significant matrix, for all intersections that are not in non-significant matrix creates a new matrix of subsets to check. 
 #Creates new matrix of significant and non significant sets
    
 #Creates a new list of all the possible intersections of the previous significant subsets
 
-number.elements=a-2
-for(l in 1:(a-4)) {  
-if(exit==FALSE){  
-newsubsetcount=length(sigfactorsubsets)
-rows=((newsubsetcount-1)*newsubsetcount)/2
-newsubsets=vector("list",rows)
-k=1   
-   for(i in 1:(newsubsetcount-1)){
-     h=i+1
-     for(j in h:newsubsetcount){
-       newsubsets[[k]]=intersect(sigfactorsubsets[[i]],sigfactorsubsets[[j]])
-       k=k+1
-     }
-   } 
-newsubsets=unique(newsubsets)
+number.elements=a-2 #This is the number of elements currently in the subsets, the 2 is from removing elements in previous steps
 
-#Checks to see if intsections are in non-significant subsets, assigns NA to subsets that are in non-significant sets
-if(length(nonsigfactorsubsets)>0){
-   for(i in 1:length(nonsigfactorsubsets))
-   {
-     for(j in 1:length(newsubsets))
-     {
-       if(sum(!(newsubsets[[j]] %in% nonsigfactorsubsets[[i]]))==0){newsubsets[[j]]=NA}
-     }
-   }
-}  
-#Removes duplicates
-newsubsets=unique(newsubsets)
+for(l in 1:(a-4)) {  #We only run from 1:(a-4) because we are checking subsets of size a-2 or less, an stop at subsets of size 2
 
-#Removes subsets of size less than current size (1:a-2)
-for(i in 1:length(newsubsets))
-  {
-  if(length(newsubsets[[i]])<(number.elements-1)){newsubsets[[i]]=NA}
-  }
-# Removes NA
-newsubsets=newsubsets[!is.na(newsubsets)]
+  if(exit==FALSE){  
+    newsubsetcount=length(sigfactorsubsets)
+    rows=((newsubsetcount-1)*newsubsetcount)/2
+    newsubsets=vector("list",rows)
+    k=1   
+      for(i in 1:(newsubsetcount-1)){
+      h=i+1
+        for(j in h:newsubsetcount){
+        newsubsets[[k]]=intersect(sigfactorsubsets[[i]],sigfactorsubsets[[j]])
+        k=k+1
+        }
+      } 
+    newsubsets=unique(newsubsets)
 
-#Creates a list of significant subsets and non-significant subsets
-newsubsetcount=length(newsubsets)
-sigfactorsubsets=vector('list',newsubsetcount)
-nonsigfactorsubsets=vector('list',newsubsetcount)
+    #Checks to see if intsections are in non-significant subsets, assigns NA to subsets that are in non-significant sets
+    if(length(nonsigfactorsubsets)>0){
+      for(i in 1:length(nonsigfactorsubsets))
+      {
+        for(j in 1:length(newsubsets))
+        {
+          if(sum(!(newsubsets[[j]] %in% nonsigfactorsubsets[[i]]))==0){newsubsets[[j]]=NA}
+        }
+      }
+    }  
+    #Removes duplicates
+    newsubsets=unique(newsubsets)
 
-   for(i in 1:newsubsetcount)
-   {
+    #Removes subsets of size less than current size (1:a-2)
+    for(i in 1:length(newsubsets))
+    {
+      if(length(newsubsets[[i]])<(number.elements-1)){newsubsets[[i]]=NA}
+    }
+    # Removes NA
+    newsubsets=newsubsets[!is.na(newsubsets)]
+
+    #Creates a list of significant subsets and non-significant subsets
+    newsubsetcount=length(newsubsets)
+    sigfactorsubsets=vector('list',newsubsetcount)
+    nonsigfactorsubsets=vector('list',newsubsetcount)
+
+    for(i in 1:newsubsetcount)
+    {
      subsetstotest=as.factor(newsubsets[[i]])
      subsetframe <-subset(frame, frame[,groupvar] %in% subsetstotest)
      subsetframe<- droplevels(subsetframe)
@@ -196,29 +303,49 @@ nonsigfactorsubsets=vector('list',newsubsetcount)
      if (test[3]==1){testpval=base$pvalBNP}
      if (test[4]==1){testpval=base$pvalWL}
      
-     if( testpval > alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {nonsigfactorsubsets[[i]]=NA}
+     if( testpval >= alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {nonsigfactorsubsets[[i]]=NA}
      if( testpval < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {sigfactorsubsets[[i]]=NA}
-     if( testpval < alpha) {cat('The Hypothesis between factor levels ', newsubsets[[i]], 'is significant  \n')}
-   }
+     if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
+    }
    
-   nonsigfactorsubsets=nonsigfactorsubsets[!is.na(nonsigfactorsubsets)]
-   sigfactorsubsets=sigfactorsubsets[!is.na(sigfactorsubsets)]
-if (length(sigfactorsubsets)<= 1 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
-if (length(sigfactorsubsets)<= 1 && factors.and.variables==TRUE){
+    nonsigfactorsubsets=nonsigfactorsubsets[!is.na(nonsigfactorsubsets)]
+    sigfactorsubsets=sigfactorsubsets[!is.na(sigfactorsubsets)]
+
+    #Checks to see if there are step2subs and if there is only one significant subset in either case exit is set to TRUE
+    if (length(sigfactorsubsets)<= 1 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(sigfactorsubsets)<= 1 && factors.and.variables==TRUE){
+      cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
+      exit=TRUE}
+}
+
+#Checks to see if the significant subsets are of length 2, if length 2 or less if length 2 or less function is done checking factor levels
+if(exit==FALSE){
+if (length(sigfactorsubsets[[1]])<= 2 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+if (length(sigfactorsubsets[[1]])<= 2 && factors.and.variables==TRUE){
   cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
   exit==TRUE}
 }
+
 number.elements=number.elements-1
 }
 }
+
   
+########################
+#Algorithm for when p<=a
+########################
+
 if(p<=a ||factors.and.variables==TRUE){
-cat('\n~Performing the Subset Algorithm based on Response Variables~ \nThe Hypothesis involving response variables ', vars, 'is significant  \n')
-#Algorithm for p<=a
-  # Step 2: Subset Algorithm for Testing Different response variabless with 1 varible removed, returns matrix where the rows are subsets(size p-1) that are significant
+cat('\n~Performing the Subset Algorithm based on Response Variables~ \n The Hypothesis of equality using response variables ', vars, 'is rejected \n')
+if (length(vars)<= 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+
+  # Step 2: Subset Algorithm for Testing Different response variabless with 1 variable removed, returns matrix where the rows are subsets(size p-1) that are significant
   #Creates new matrix of all possible intersections and finds which are signficant, creates new matrix of significant subsets
   
-  #Test each of the p-1 subgroups, creates list of p-1 groups which are significant
+  #Create multiplier for multiple testing procedure
+ 
+  #Test each of the p-1 subgroups, creates list of p-1 groups which are significant, for the multiple testing procedure the p-value must be 
+  #multiplied by p choose # in subset, p-1, so in this case the multiplier is p
   step2subsets=vector("list",p)
   for(i in 1:p)
   {
@@ -229,17 +356,18 @@ cat('\n~Performing the Subset Algorithm based on Response Variables~ \nThe Hypot
     if (test[4]==1){testpval=base$pvalWL}
     
     
-    if( testpval < alpha) {step2subsets[[i]]=vars[-i]}
+    if( testpval*p < alpha) {step2subsets[[i]]=vars[-i]}
     else{step2subsets[[i]]=NA}
-    if( testpval < alpha) {cat('The Hypothesis involving response variables ', sigvariables=vars[-i], 'is significant \n')}
+    if( testpval*p < alpha) {cat('The Hypothesis of equality using response variables ', sigvariables=vars[-i], 'is rejected \n')}
   }
   
   step2subsets=step2subsets[!is.na(step2subsets)]
   
-  if (length(step2subsets)<= 1){return(cat('All appropriate subsets using response variables have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+ 
+  if (length(step2subsets)<= 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+  if (length(step2subsets[[1]])<= 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
   
-  
-  #Creates a new list of all the possible intersections of the previous significant subsets
+#Creates a new list of all the possible intersections of the previous significant subsets
   
   step2subsetcount=length(step2subsets)
   num.intersections=((step2subsetcount-1)*step2subsetcount)/2
@@ -254,10 +382,12 @@ cat('\n~Performing the Subset Algorithm based on Response Variables~ \nThe Hypot
   }  
   
   
-  #Creates a list of significant subsets and non-significant subsets
+#Creates a list of significant subsets and non-significant subsets, subsets are now of length p-2,  p-value is multiplied by the number of test performded
   newsubsetcount=length(newsubsets)
-  sigfactorsubsets=vector("list",newsubsetcount)
-  nonsigfactorsubsets=vector("list",newsubsetcount)
+  sig.variable.subsets=vector("list",newsubsetcount)
+  nonsig.variable.subsets=vector("list",newsubsetcount)
+  multiplier=newsubsetcount  
+  
   for(i in 1:newsubsetcount)
   {
 
@@ -267,42 +397,48 @@ cat('\n~Performing the Subset Algorithm based on Response Variables~ \nThe Hypot
     if (test[3]==1){testpval=base$pvalBNP}
     if (test[4]==1){testpval=base$pvalWL}
     
-    if( testpval > alpha) {nonsigfactorsubsets[[i]]=newsubsets[[i]]}else{nonsigfactorsubsets[[i]]=NA}
-    if( testpval < alpha) {sigfactorsubsets[[i]]=newsubsets[[i]]}else{sigfactorsubsets[[i]]=NA}
-    if( testpval < alpha) {cat('The Hypothesis involving response variables ', newsubsets[[i]], 'is significant  \n')}
+    if( testpval*multiplier >= alpha) {nonsig.variable.subsets[[i]]=newsubsets[[i]]}else{nonsig.variable.subsets[[i]]=NA}
+    if( testpval*multiplier < alpha) {sig.variable.subsets[[i]]=newsubsets[[i]]}else{sig.variable.subsets[[i]]=NA}
+    if( testpval*multiplier < alpha) {cat('The Hypothesis of equality using response variables ', newsubsets[[i]], 'is rejected  \n')}
   }
-  nonsigfactorsubsets=nonsigfactorsubsets[!is.na(nonsigfactorsubsets)]
-  sigfactorsubsets=sigfactorsubsets[!is.na(sigfactorsubsets)]
-  if (length(sigfactorsubsets)<= 1){return(cat('All appropriate subsets using response variables have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+
+  nonsig.variable.subsets=nonsig.variable.subsets[!is.na(nonsig.variable.subsets)]
+  sig.variable.subsets=sig.variable.subsets[!is.na(sig.variable.subsets)]
+  if (length(sig.variable.subsets)<= 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+  if (length(sig.variable.subsets[[1]])<= 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
   
   #Step 3: Reads in the significant and non significant subsets, intersects the significant sets, checks to see if intersection is 
   # non-significant list, for all intersections that are not in non-significant matrix creates a new matrix of subsets to check. 
   #Creates new list of significant and non significant sets
   
   #Creates a new list of all the possible intersections of the previous significant subsets
+  
   number.elements=p-2
-  for(l in 1:(p-4)) {  
+  if (number.elements== 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+  for(l in 1:(p-3)) {  
     
-    newsubsetcount=length(sigfactorsubsets)
+    newsubsetcount=length(sig.variable.subsets)
+    
     rows=((newsubsetcount-1)*newsubsetcount)/2
     newsubsets=vector("list",rows)
     k=1   
     for(i in 1:(newsubsetcount-1)){
       h=i+1
       for(j in h:newsubsetcount){
-        newsubsets[[k]]=intersect(sigfactorsubsets[[i]],sigfactorsubsets[[j]])
+        newsubsets[[k]]=intersect(sig.variable.subsets[[i]],sig.variable.subsets[[j]])
         k=k+1
       }
     } 
     newsubsets=unique(newsubsets)
     
+    
     #Checks to see if intsections are in non-significant subsets, assigns NA to subsets that are in non-significant sets
-    if(length(nonsigfactorsubsets)>0){
-      for(i in 1:length(nonsigfactorsubsets))
+    if(length(nonsig.variable.subsets)>0){
+      for(i in 1:length(nonsig.variable.subsets))
       {
         for(j in 1:length(newsubsets))
         {
-          if(sum(!(newsubsets[[j]] %in% nonsigfactorsubsets[[i]]))==0){newsubsets[[j]]=NA}
+          if(sum(!(newsubsets[[j]] %in% nonsig.variable.subsets[[i]]))==0){newsubsets[[j]]=NA}
         }
       }
     }  
@@ -319,9 +455,9 @@ cat('\n~Performing the Subset Algorithm based on Response Variables~ \nThe Hypot
     
     #Creates a list of significant subsets and non-significant subsets
     newsubsetcount=length(newsubsets)
-    sigfactorsubsets=vector('list',newsubsetcount)
-    nonsigfactorsubsets=vector('list',newsubsetcount)
-    
+    sig.variable.subsets=vector('list',newsubsetcount)
+    nonsig.variable.subsets=vector('list',newsubsetcount)
+    multiplier=newsubsetcount   #The multiplier is the number of test peformed
     for(i in 1:newsubsetcount)
     {
      
@@ -331,15 +467,17 @@ cat('\n~Performing the Subset Algorithm based on Response Variables~ \nThe Hypot
       if (test[3]==1){testpval=base$pvalBNP}
       if (test[4]==1){testpval=base$pvalWL}
       
-      if( testpval > alpha) {nonsigfactorsubsets[[i]]=newsubsets[[i]]}else {nonsigfactorsubsets[[i]]=NA}
-      if( testpval < alpha) {sigfactorsubsets[[i]]=newsubsets[[i]]}else {sigfactorsubsets[[i]]=NA}
-      if( testpval < alpha) {cat('The Hypothesis involving response variables ', newsubsets[[i]], 'is significant  \n')}
+      if( testpval*multiplier >= alpha) {nonsig.variable.subsets[[i]]=newsubsets[[i]]}else {nonsig.variable.subsets[[i]]=NA}
+      if( testpval*multiplier < alpha) {sig.variable.subsets[[i]]=newsubsets[[i]]}else {sig.variable.subsets[[i]]=NA}
+      if( testpval*multiplier < alpha) {cat('The Hypothesis of equality using response variables ', newsubsets[[i]], 'is rejected \n')}
     }
     
-    nonsigfactorsubsets=nonsigfactorsubsets[!is.na(nonsigfactorsubsets)]
-    sigfactorsubsets=sigfactorsubsets[!is.na(sigfactorsubsets)]
+    nonsig.variable.subsets=nonsig.variable.subsets[!is.na(nonsig.variable.subsets)]
+    sig.variable.subsets=sig.variable.subsets[!is.na(sig.variable.subsets)]
+    
     number.elements=number.elements-1
-    if (length(sigfactorsubsets)<= 1){return(cat('All appropriate subsets using response variables have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(sig.variable.subsets)<= 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(sig.variable.subsets[[1]])<= 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
   } 
   
   

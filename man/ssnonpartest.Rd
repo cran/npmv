@@ -5,10 +5,11 @@
 Nonparametric Comparison of Multivariate Samples Using Subset algorithm
 }
 \description{
-Performs analysis of one-way multivariate data using nonparametric techniques developed since 2008. Allows for small samples and ordinal variables, or even mixture of the different variable types ordinal, quantitative, binary. Using F-approximations for ANOVA Type, Wilks' Lambda Type, Lawley Hotelling Type, and Bartlett Nanda Pillai Type test statics. The function compares the multivariate distributions of the different samples using the subset algorithm to determine which of the variables/factors differ from one another.  The algorithm follows the closed multiple testing principle. 
+Performs detailed analysis of one-way multivariate data using nonparametric techniques developed since 2008. Allows for small samples and ordinal variables, or even mixture of the different variable types ordinal, quantitative, binary. Using F-approximations for ANOVA Type, Wilks' Lambda Type, Lawley Hotelling Type, and Bartlett Nanda Pillai Type test statics. The function compares the multivariate distributions of the different samples using a subset algorithm to determine which of the variables cause significant results, and which factor levels differ significantly from one another.  The algorithm follows the closed multiple testing principle for factor levels, and adjusts p-values for subset testing of variables. In both cases, the global alpha-level is maintained at the prespecified level.  
+When testing which subsets of factor levels produce significant results, the closure principle (Marcus, Peritz, Gabriel 1976, Sonnemann 2008) can be applied since the family of hypotheses is closed under intersections. When testing variables, the family of hypotheses is not closed under intersection. Therefore, in order to control the global (maximum overall) type I error rate, the following procedure is carried out: the global test involving all p variables is conducted at level alpha. At the steps where subsets of q<p variables are tested (first q=p-1, then q=p-2, etc. until q=1), the alpha-level is adjusted by factor (p choose q). 
 }
 \usage{
-ssnonpartest(formula,data,alpha=.05,test=c(1,0,0,0),factors.and.variables=FALSE)
+ssnonpartest(formula,data,alpha=.05,test=c(0,0,0,1),factors.and.variables=FALSE)
 }
 
 \arguments{
@@ -19,10 +20,10 @@ an object of class "formula",  with a single explanatory variable and multiple r
 an object of class "data.frame", containing the variables in the formula. 
 }
   \item{alpha}{
-numerical. Gives the level of significance at which hypothesis test are to be performed. 
+numerical. Gives the global level of significance at which hypothesis test are to be performed. 
 }
   \item{test}{
-vector of zeros and ones which specifies which test statistic is  to be calculated. A 1 corresponds to the test statistic which is to be returned.  Only one test statistic can be specified.  Default is for the F approximation of the ANOVA type statistic to be calculated. The order of the test statistics is: ANOVA type, Lawley Hotelling type (McKeon's F approximation), Bartlett-Nanda-Pillai type (Muller's F approximation), and Wilks' Lambda type. 
+vector of zeros and ones which specifies which test statistic is  to be calculated. A 1 corresponds to the test statistic which is to be returned.  Only one test statistic can be specified.  Default is for Wilks' Lambda type statistic to be calculated. The order of the test statistics is: ANOVA type, Lawley Hotelling type (McKeon's F approximation), Bartlett-Nanda-Pillai type (Muller's F approximation), and Wilks' Lambda type. 
 }
   \item{factors.and.variables}{
 logical. If TRUE subset algorithm is ran both by factor levels and by variable.  Default is FALSE.
@@ -36,21 +37,24 @@ The nonparametric methods implemented in the code have been developed for comple
 Returns  the subsections which are significant. 
 }
 \references{
-Arne C. Bathke , Solomon W. Harrar, and Laurence V. 
-Madden. "How to compare small multivariate samples 
-using nonparametric tests," Computational Statistics 
-and Data Analysis 52 (2008) 4951-4965 
+Bathke AC, Harrar SW, Madden LV (2008). 
+How to compare small multivariate samples using nonparametric tests. 
+Computational Statistics and Data Analysis 52, 4951-4965 
 
-Brunner E, Domhof S, Langer F (2002), 
-Nonparametric Analysis of Longitudinal Data in Factorial 
-Experiments. Wiley, New York.
+Brunner E, Domhof S, Langer F (2002). 
+Nonparametric Analysis of Longitudinal Data in Factorial Experiments. 
+Wiley, New York.
 
-Chunxu Liu, Arne C. Bathke, Solomon W. Harrar. 
-"A nonparametric version of Wilks' lambda-Asymptotic 
-results and small sample approximations" 
-Statistics and Probability Letters 81 (2011) 1502-1506
+Liu C, Bathke AC, Harrar SW (2011). 
+A nonparametric version of Wilks' lambda - Asymptotic results and small sample approximations. Statistics and Probability Letters 81, 1502-1506
 
-Horst, L.E., Locke, J., Krause, C.R., McMahaon, R.W., Madden, L.V., Hoitink, H.A.J., 2005. Suppression of Botrytis blight of Begonia by Trichoderma hamatum 382 in peat and compost-amended potting mixes. Plant Disease 89, 1195-1200.
+Horst LE, Locke J, Krause CR, McMahaon RW, Madden LV, Hoitink HAJ (2005). 
+Suppression of Botrytis blight of Begonia by Trichoderma hamatum 382 in peat and compost-amended potting mixes. Plant Disease 89, 1195-1200.
+
+Marcus R, Peritz E, Gabriel KR (1976). 
+On closed test procedures with special reference to ordered analysis of variance. Biometrika 63(3), 655-660.
+
+Sonnemann E (2008). General solutions to multiple testing problems. Translation of "Sonnemann E (1982). Allgemeine Losungen multipler Testprobleme. EDV in Medizin und Biologie 13(4), 120-128". Biometrical Journal 50, 641-656.
 }
 \author{
 Woodrow Burchett, Amanda Ellis, Arne Bathke
@@ -87,6 +91,7 @@ and
 \[r=(N-a)-(p-(a-1)+1)/2.\]
 If
 \[p(a-1)=2 then  t=1, else  t=sqrt{  (p^2(a-1)^2-4)/(p^2+(a-1)^2-5) }\]
+Note that regarding the above formula, there is a typo in the article Liu, Bathke, Harrar (2011).
 }
 
 \section{Warning}{

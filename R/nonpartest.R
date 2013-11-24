@@ -9,7 +9,7 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
   formula=Formula(formula)
   frame=model.frame(formula,data=data)
  
-  #Assigns group variable and response variables
+#Assigns group variable and response variables
   groupvar.location=length(frame[1,])
   groupvar=names(frame)[groupvar.location]
   vars=names(frame)[1:(groupvar.location-1)]
@@ -19,17 +19,6 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
       return('Error: Missing Data')
    }
 
-   if(plots){
-      if (length(vars) > 1)
-      {
-         oask <- devAskNewPage(TRUE)
-         on.exit(devAskNewPage(oask))
-      }
-
-      for(i in 1:length(vars)){
-         boxplot(frame[,vars[i]]~frame[,groupvar],data=frame,main=vars[i],ylab=vars[i],xlab=names(frame)[1])
-      }
-   }
 
    if(!is.factor(frame[,groupvar]))
    {
@@ -53,8 +42,35 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
    }
 
    if(sum(ssize<2)>0){return('Error: Each group must have sample size of at least 2')}
-
-   # Sets up R matrix
+  
+#Plot
+  if(plots==TRUE && max(ssize)>10){
+    if (length(vars) > 1)
+    {
+      oask <- devAskNewPage(TRUE)
+      on.exit(devAskNewPage(oask))
+    }
+    
+    for(i in 1:length(vars)){
+    boxplot(frame[,vars[i]]~frame[,groupvar],data=frame,main=vars[i],ylab=vars[i],xlab=names(frame)[groupvar.location])
+    }
+    
+  }
+  
+  if(plots==TRUE && max(ssize)<=10){
+    if (length(vars) > 1)
+    {
+      oask <- devAskNewPage(TRUE)
+      on.exit(devAskNewPage(oask))
+    }
+    for(i in 1:length(vars)){
+    plot=qplot(frame[,groupvar],frame[,vars[i]],data=frame,main=vars[i],ylab=vars[i],xlab=names(frame)[groupvar.location])
+    print(plot)
+    }
+  }
+    
+   
+# Sets up R matrix
    Rmat <- matrix(NA,N,p)
    
    for(j in 1:p){
@@ -106,15 +122,15 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
 
       for(i in 1:a){
          for(j in 1:p){
-            rel[i,j] <- (1/N)*(mean(Rmat[which(frame[,groupvar]==levels(frame[,groupvar])[i]),j])-.5)
+            rel[i,j] <- signif((1/N)*(mean(Rmat[which(frame[,groupvar]==levels(frame[,groupvar])[i]),j])-.5),digits=5)
          }
       }
 
       if(a == 2){
          origrel <- rel
          for(j in 1:p){
-            rel[1,j] <- origrel[1,j] - origrel[2,j] + .5
-            rel[2,j] <- origrel[2,j] - origrel[1,j] + .5
+            rel[1,j] <- signif(origrel[1,j] - origrel[2,j] + .5,digits=5)
+            rel[2,j] <- signif(origrel[2,j] - origrel[1,j] + .5,digits=5)
          }
       }
    }

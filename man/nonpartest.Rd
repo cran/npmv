@@ -93,6 +93,7 @@ and
 \[r=(N-a)-(p-(a-1)+1)/2.\]
 If
 \[p(a-1)=2 then  t=1, else  t=sqrt{  (p^2(a-1)^2-4)/(p^2+(a-1)^2-5) }\]
+Note that regarding the above formula, there is a typo in the article Liu, Bathke, Harrar (2011).
 }
 
 \section{Warning}{

@@ -66,6 +66,8 @@ function(frame,group,vars,tests=c(1,1,1,1)){
    fhat0 <- ((a^2)/((a-1)*sum(1/(ssize-1))))*fhat
    Fanova <- sum(diag(H2))/sum(diag(G3))
    pvalanova <- 1 - pf(Fanova,fhat,fhat0)
+   df1anova<-fhat
+   df2anova<-fhat0
 
    #McKeon approximation for the Lawley Hotelling Test
    if(tests[2]==1){
@@ -76,9 +78,13 @@ function(frame,group,vars,tests=c(1,1,1,1)){
       g <- (p*(a-1)*(D-2))/((N-a-p-1)*D)
       FLH <- U/g
       pvalLH <- 1- pf(FLH,K,D)
+      df1LH<-K
+      df2LH<-D
    }else{
       FLH <- NA
       pvalLH <- NA
+      df1LH<-NA
+      df2LH<-NA
    }
 
    #Muller approximation for the Bartlett-Nanda-Pillai Test
@@ -89,9 +95,13 @@ function(frame,group,vars,tests=c(1,1,1,1)){
       nu2   <- ((N-a+gamma-p)/N) * (( (gamma*(N-a+gamma-p)*(N+2)*(N-1))/((N-a)*(N-p)))-2)
       FBNP  <- ((V/gamma)/nu1)/((1-(V/gamma))/nu2)
       pvalBNP <- 1-pf(FBNP,nu1,nu2)
+      df1BNP<-nu1
+      df2BNP<-nu2
    }else{
       FBNP  <- NA
       pvalBNP <- NA
+      df1BNP<-NA
+      df2BNP<-NA
    }
 
    #Wilk's Lambda Test
@@ -110,12 +120,17 @@ function(frame,group,vars,tests=c(1,1,1,1)){
       df2_WLF=r_WL*t_WL-2*u_WL
       WLF=(1-lambda^(1/t_WL))/lambda^(1/t_WL)*df2_WLF/df1_WLF
       pvalWL=1-pf(WLF,df1_WLF,df2_WLF)
+      df1WL<-df1_WLF
+      df2WL<-df2_WLF
    }else{
       WLF=NA
       pvalWL=NA
+      df1WL<-NA
+      df2WL<-NA
    }
 
-   out <- list('Fanova'=Fanova,'FWL'=WLF,'pvalWL'=pvalWL,'fhat'=fhat,'fhat0'=fhat0,'pvalanova'=pvalanova,'FLH'=FLH,'pvalLH'=pvalLH,'FBNP'=FBNP,'pvalBNP'=pvalBNP)
+   out <- list('Fanova'=Fanova,'FWL'=WLF,'pvalWL'=pvalWL,'fhat'=fhat,'fhat0'=fhat0,'pvalanova'=pvalanova,'FLH'=FLH,'pvalLH'=pvalLH,'FBNP'=FBNP,'pvalBNP'=pvalBNP,
+               'df1anova'=df1anova,'df2anova'=df2anova,'df1LH'=df1LH,'df2LH'=df2LH,'df1BNP'=df1BNP,'df2BNP'=df2BNP,'df1WL'=df1WL,'df2WL'=df2WL)
    return(out)
 
 }

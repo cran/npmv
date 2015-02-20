@@ -54,7 +54,8 @@ ssnonpartest <- function(formula,data,alpha=.05,test=c(0,0,0,1),factors.and.vari
 #Defines logical variable that tells when to exit
   exit=FALSE
 
-#Checks to see if R Matrix is singular, if so returns warning
+#Checks to see if R Matrix is singular, if so returns warning and chances to ANOVA type statistic
+if(test[1]!=1){
   # Compute sample sizes per group
   N <- length(frame[,1])
   ssize <- array(NA,a)
@@ -102,9 +103,10 @@ ssnonpartest <- function(formula,data,alpha=.05,test=c(0,0,0,1),factors.and.vari
   }
   
   if(det(H1)==0 | det(H2)==0 | det(G1)==0 | det(G2)==0 | det(G3)==0 && test[1]!=1){
-    return('Rank Matrix is Singular, only ANOVA test can be calculated')
-    tests=c(1,0,0,0)
-  }
+    cat('Rank Matrix is Singular, only ANOVA test can be calculated \n')
+    test=c(1,0,0,0)
+  }else{
+  
   H1 <- (1/(a-1))*H1
   H2 <- (1/(a-1))*H2
   G1 <- (1/(N-a))*G1
@@ -112,10 +114,20 @@ ssnonpartest <- function(formula,data,alpha=.05,test=c(0,0,0,1),factors.and.vari
   G3 <- (1/a)*G3
 
   if(det(H1)==0 | det(H2)==0 | det(G1)==0 | det(G2)==0 | det(G3)==0 && test[1]!=1){
-  return('Rank Matrix is Singular, only ANOVA test can be calculated')
-  tests=c(1,0,0,0)
+    test=c(1,0,0,0)
+    cat('Rank Matrix is Singular, only ANOVA test can be calculated \n')
+    }
   }
-  
+}  
+
+##################################
+#Output of which statistic is used
+##################################
+if(test[1]==1){cat('\nThe ANOVA type statistic will be used in the following test \n')}
+if(test[2]==1){cat('\nThe Lawley Hotelling type (McKeon\'s F approximation) statistic will be used in the following test \n')}
+if(test[3]==1){cat('\nThe  Bartlett-Nanda-Pillai type (Muller\'s F approximation) statistic will be used in the following test \n')}
+if(test[4]==1){cat('\nThe Wilks\' Lambda type statistic will be used in the following test \n')}
+
 #######################
 #Global Hypothesis Test
 ####################### 
@@ -137,7 +149,7 @@ ssnonpartest <- function(formula,data,alpha=.05,test=c(0,0,0,1),factors.and.vari
 if(p>a || factors.and.variables==TRUE){  #Only runs if user wants to check subsets of factor levels
   
 #Since the Global hypothesis is significant outputs first subset, which is the subset of all factor levels
-cat('\n~Performing the Subset Algorithm based on Factor levels~\n The Hypothesis of equality between factor levels ', levels, 'is rejected \n')
+cat('\n~Performing the Subset Algorithm based on Factor levels~\nThe Hypothesis of equality between factor levels ', levels, 'is rejected \n')
 
 #Exit if only 2 factor levels are being tested
 if (length(levels)<= 2 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
@@ -275,21 +287,36 @@ for(l in 1:(a-4)) {  #We only run from 1:(a-4) because we are checking subsets o
         }
       }
     }  
+    
+    #Checks to see if there are new subsets to check
+    if (length(newsubsets)==1 && is.na(newsubsets) && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(newsubsets)==1 && is.na(newsubsets) && factors.and.variables==TRUE){cat('All appropriate subsets using factor levels have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
+        exit=TRUE}
+    
+    if(exit==FALSE){
     #Removes duplicates
     newsubsets=unique(newsubsets)
 
+    
     #Removes subsets of size less than current size (1:a-2)
     for(i in 1:length(newsubsets))
     {
       if(length(newsubsets[[i]])<(number.elements-1)){newsubsets[[i]]=NA}
     }
+    
     # Removes NA
     newsubsets=newsubsets[!is.na(newsubsets)]
 
+    #Checks to see if there are new subsets to check
+    if (length(newsubsets)==0  && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    if (length(newsubsets)==0 && factors.and.variables==TRUE){cat('All appropriate subsets using factor levels have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
+        exit=TRUE}
+    
+    if(exit==FALSE){
     #Creates a list of significant subsets and non-significant subsets
     newsubsetcount=length(newsubsets)
     sigfactorsubsets=vector('list',newsubsetcount)
-    nonsigfactorsubsets=vector('list',newsubsetcount)
+    nonsigfactorsubsets.new=vector('list',newsubsetcount)
 
     for(i in 1:newsubsetcount)
     {
@@ -303,19 +330,24 @@ for(l in 1:(a-4)) {  #We only run from 1:(a-4) because we are checking subsets o
      if (test[3]==1){testpval=base$pvalBNP}
      if (test[4]==1){testpval=base$pvalWL}
      
-     if( testpval >= alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {nonsigfactorsubsets[[i]]=NA}
+     if( testpval >= alpha) {nonsigfactorsubsets.new[[i]]=levels(subsetframe[,groupvarsub])}else {nonsigfactorsubsets.new[[i]]=NA}
      if( testpval < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {sigfactorsubsets[[i]]=NA}
      if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
     }
    
-    nonsigfactorsubsets=nonsigfactorsubsets[!is.na(nonsigfactorsubsets)]
+    nonsigfactorsubsets.new=nonsigfactorsubsets.new[!is.na(nonsigfactorsubsets.new)]
     sigfactorsubsets=sigfactorsubsets[!is.na(sigfactorsubsets)]
+    
+    #Combine previous non-significant subsets with new
+    nonsigfactorsubsets=c(nonsigfactorsubsets,nonsigfactorsubsets.new)
 
     #Checks to see if there are step2subs and if there is only one significant subset in either case exit is set to TRUE
     if (length(sigfactorsubsets)<= 1 && factors.and.variables==FALSE){return(cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
     if (length(sigfactorsubsets)<= 1 && factors.and.variables==TRUE){
       cat('All appropriate subsets using factor levels have been checked using a closed multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha,'\n')
       exit=TRUE}
+    }
+  }
 }
 
 #Checks to see if the significant subsets are of length 2, if length 2 or less if length 2 or less function is done checking factor levels
@@ -415,6 +447,7 @@ if (length(vars)<= 1){return(cat('All appropriate subsets using response variabl
   
   number.elements=p-2
   if (number.elements== 1){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+  
   for(l in 1:(p-3)) {  
     
     newsubsetcount=length(sig.variable.subsets)
@@ -445,6 +478,9 @@ if (length(vars)<= 1){return(cat('All appropriate subsets using response variabl
     #Removes duplicates
     newsubsets=unique(newsubsets)
     
+    #Checks to see if there are new subsets to check
+    if (length(newsubsets)==1 && is.na(newsubsets)){return(cat('All appropriate subsets using response variables have been checked using a multiple testing procedure, which controls the maximum overall type I error rate at alpha=',alpha))}
+    
     #Removes subsets of size less than current size (1:p-2)
     for(i in 1:length(newsubsets))
     {
@@ -452,11 +488,11 @@ if (length(vars)<= 1){return(cat('All appropriate subsets using response variabl
     }
     # Removes NA
     newsubsets=newsubsets[!is.na(newsubsets)]
-    
+       
     #Creates a list of significant subsets and non-significant subsets
     newsubsetcount=length(newsubsets)
     sig.variable.subsets=vector('list',newsubsetcount)
-    nonsig.variable.subsets=vector('list',newsubsetcount)
+    nonsig.variable.subsets.new=vector('list',newsubsetcount)
     multiplier=newsubsetcount   #The multiplier is the number of test peformed
     for(i in 1:newsubsetcount)
     {
@@ -467,12 +503,22 @@ if (length(vars)<= 1){return(cat('All appropriate subsets using response variabl
       if (test[3]==1){testpval=base$pvalBNP}
       if (test[4]==1){testpval=base$pvalWL}
       
-      if( testpval*multiplier >= alpha) {nonsig.variable.subsets[[i]]=newsubsets[[i]]}else {nonsig.variable.subsets[[i]]=NA}
+      if( testpval*multiplier >= alpha) {nonsig.variable.subsets.new[[i]]=newsubsets[[i]]}else {nonsig.variable.subsets.new[[i]]=NA}
       if( testpval*multiplier < alpha) {sig.variable.subsets[[i]]=newsubsets[[i]]}else {sig.variable.subsets[[i]]=NA}
       if( testpval*multiplier < alpha) {cat('The Hypothesis of equality using response variables ', newsubsets[[i]], 'is rejected \n')}
     }
     
-    nonsig.variable.subsets=nonsig.variable.subsets[!is.na(nonsig.variable.subsets)]
+    nonsig.variable.subsets.new=nonsig.variable.subsets.new[!is.na(nonsig.variable.subsets.new)]
+    
+    #Combine previous non-significant subsets with new
+    nonsig.variable.subsets=c(nonsig.variable.subsets,nonsig.variable.subsets.new)
+    
+    sig.variable.subsets=sig.variable.subsets[!is.na(sig.variable.subsets)]
+    
+    #Removes Duplicates
+    sig.variable.subsets=unique(sig.variable.subsets)
+    
+    # Removes NA
     sig.variable.subsets=sig.variable.subsets[!is.na(sig.variable.subsets)]
     
     number.elements=number.elements-1

@@ -1,4 +1,4 @@
-nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,tests=c(1,1,1,1),releffects=TRUE){
+nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,tests=c(1,1,1,1),releffects=TRUE,...){
 
 #Checks to see if formula
   if(!is(formula,"formula")){
@@ -43,7 +43,8 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
 
    if(sum(ssize<2)>0){return('Error: Each group must have sample size of at least 2')}
   
-#Plot
+#Plot gives the user the options to specify title or not
+  par.list <- list()
   if(plots==TRUE && max(ssize)>10){
     if (length(vars) > 1)
     {
@@ -52,7 +53,17 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
     }
     
     for(i in 1:length(vars)){
-    boxplot(frame[,vars[i]]~frame[,groupvar],data=frame,main=vars[i],ylab=vars[i],xlab=names(frame)[groupvar.location])
+      par.list[[i]] <- list(...)
+      if(!'main'%in%names(par.list[[i]])){
+        par.list[[i]] <- c(par.list[[i]], main=vars[i])
+      }
+      if(!'ylab'%in%names(par.list[[i]])){
+        par.list[[i]] <- c(par.list[[i]], ylab=vars[i])
+      }
+      if(!'xlab'%in%names(par.list[[i]])){
+        par.list[[i]] <- c(par.list[[i]], xlab=names(frame)[groupvar.location])
+      }
+      do.call(boxplot,c(list(frame[,vars[i]]~frame[,groupvar],data=frame),par.list[[i]]))
     }
     
   }
@@ -64,9 +75,20 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
       on.exit(devAskNewPage(oask))
     }
     for(i in 1:length(vars)){
-    plot=qplot(frame[,groupvar],frame[,vars[i]],data=frame,main=vars[i],ylab=vars[i],xlab=names(frame)[groupvar.location])
-    print(plot)
-    }
+      par.list[[i]] <- list(...)
+      if(!'main'%in%names(par.list[[i]])){
+        par.list[[i]] <- c(par.list[[i]], main=vars[i])
+      }
+      if(!'ylab'%in%names(par.list[[i]])){
+        par.list[[i]] <- c(par.list[[i]], ylab=vars[i])
+      }
+      if(!'xlab'%in%names(par.list[[i]])){
+        par.list[[i]] <- c(par.list[[i]], xlab=names(frame)[groupvar.location])
+      }
+      #plot=qplot(frame[,groupvar],frame[,vars[i]],data=frame,...)
+      do.call(boxplot,c(list(frame[,vars[i]]~frame[,groupvar],data=frame),border='white',par.list[[i]]))
+      do.call(points,c(list(frame[,vars[i]]~frame[,groupvar],data=frame),pch=20))
+      }
   }
     
    
@@ -110,7 +132,7 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
    G3 <- (1/a)*G3
 
    if(det(H1)==0 | det(H2)==0 | det(G1)==0 | det(G2)==0 | det(G3)==0){
-      warning('Rank Matrix is Singular, only ANOVA test returned')
+      warning('Rank covariance matrix is singular, only ANOVA test returned')
       tests=c(1,0,0,0)
    }
 
@@ -144,6 +166,14 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
    Fanova     <- base$Fanova
    FWL       <- base$FWL
    pvalWL    <- base$pvalWL
+   df1anova  <- base$df1anova
+   df2anova  <- base$df2anova
+   df1LH     <- base$df1LH
+   df2LH     <- base$df2LH
+   df1BNP    <- base$df1BNP
+   df2BNP    <- base$df2BNP
+   df1WL     <- base$df1WL
+   df2WL     <- base$df2WL
 
    if(permtest){
       perms <- matrix(NA,permreps,4)
@@ -162,20 +192,22 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
       pvalBNPperm  <- sum(as.numeric(perms[,3]>FBNP))/permreps
       pvalWLperm       <- sum(as.numeric(perms[,4]>FWL))/permreps
       
-      results=matrix(c(Fanova,FLH,FBNP,FWL,pvalanova,pvalLH,pvalBNP,pvalWL,pvalanovperm,pvalLHperm,pvalBNPperm,pvalWLperm),ncol=3)
+      results=matrix(c(Fanova,FLH,FBNP,FWL,df1anova,df1LH,df1BNP,df1WL,df2anova,df2LH,df2BNP,df2WL,pvalanova,pvalLH,pvalBNP,pvalWL,pvalanovperm,pvalLHperm,pvalBNPperm,pvalWLperm),ncol=5)
       results=data.frame(results,row.names=c('ANOVA type test p-value','McKeon approx. for the Lawley Hotelling Test','Muller approx. for the Bartlett-Nanda-Pillai Test',
                     'Wilks Lambda'))
-      colnames(results)=c('Test Statistic','P-value','Permutation Test p-value')
-      results[,3] <- round(as.numeric(results[,3]),digits=3)
+      colnames(results)=c('Test Statistic','df1','df2','P-value','Permutation Test p-value')
+      results[,5] <- round(as.numeric(results[,5]),digits=3)
    }else{
-      results=matrix(c(Fanova,FLH,FBNP,FWL,pvalanova,pvalLH,pvalBNP,pvalWL),ncol=2)
+      results=matrix(c(Fanova,FLH,FBNP,FWL,df1anova,df1LH,df1BNP,df1WL,df2anova,df2LH,df2BNP,df2WL,pvalanova,pvalLH,pvalBNP,pvalWL),ncol=4)
       results=data.frame(results,row.names=c('ANOVA type test p-value','McKeon approx. for the Lawley Hotelling Test','Muller approx. for the Bartlett-Nanda-Pillai Test',
                     'Wilks Lambda'))
-      colnames(results)=c('Test Statistic','P-value')
+      colnames(results)=c('Test Statistic','df1','df2','P-value')
    }
 
    results[,1] <- round(as.numeric(results[,1]),digits=3)
    results[,2] <- round(as.numeric(results[,2]),digits=3)
+   results[,3] <- round(as.numeric(results[,3]),digits=3)
+   results[,4] <- round(as.numeric(results[,4]),digits=3)
 
    if(releffects){
       if(a == 2){

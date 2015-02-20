@@ -9,7 +9,7 @@ Performs analysis of one-way multivariate data using nonparametric techniques de
 }
 \usage{
 nonpartest(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,
-          tests=c(1,1,1,1),releffects=TRUE)
+          tests=c(1,1,1,1),releffects=TRUE,...)
 }
 
 \arguments{
@@ -34,9 +34,12 @@ vector of zeros and ones which specifies which test statistics are to be calcula
   \item{releffects}{
 logical.  If TRUE the relative effects are returned
 }
+  \item{...}{
+Graphical parameters to be passed to the boxplot function.   
+  }
 }
 \details{
-The nonparametric methods implemented in the code have been developed for complete data with no missing values.  The code automatically produces a warning if there is missing data.
+The nonparametric methods implemented in the code have been developed for complete data with no missing values.  The code automatically produces a warning if there is missing data. 
 }
 \value{
 Returns a list of 2 data frames if relative effects are turned on, otherwise returns a single data frame.  First data frame consist of p-values for test statistics and permutation test (if permutation test is turned on), second data frame consist of relative effects for each response variable. 

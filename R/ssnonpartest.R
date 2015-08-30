@@ -162,7 +162,7 @@ if (length(levels)<= 2 && factors.and.variables==TRUE){
 #Creates new matrix of all possible intersections and finds which are signficant, creates new matrix of significant subsets
 if(exit==FALSE){
 
-  #Test each of the a-1 subgroups, creates list of a-1 groups which are significant
+  #Test each of the a-1 subgroups, creates list of a-1 groups which are significant, the p-value is multiplied by a/(a-1) if a>3
   step2subsets=vector("list",a)
   for(i in 1:a)
     {
@@ -175,11 +175,19 @@ if(exit==FALSE){
       if (test[3]==1){testpval=base$pvalBNP}
       if (test[4]==1){testpval=base$pvalWL}
    
-
-      if( testpval < alpha) {step2subsets[[i]]=levels(subsetframe[,groupvarsub])}
-      else{step2subsets[[i]]=NA}
-      if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', siglevels=levels[-i], 'is rejected  \n')}
-      }
+      #p-value is multiplied by a/k if a>3 , where k=a-1 is the dimension of the subset being tested
+    k=a-1
+    if(a>3){
+            if( testpval*a/k < alpha) {step2subsets[[i]]=levels(subsetframe[,groupvarsub])}
+            else{step2subsets[[i]]=NA}
+            if( testpval*a/k < alpha) {cat('The Hypothesis of equality between factor levels ', siglevels=levels[-i], 'is rejected  \n')}
+          }else{
+            if( testpval < alpha) {step2subsets[[i]]=levels(subsetframe[,groupvarsub])}
+            else{step2subsets[[i]]=NA}
+            if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', siglevels=levels[-i], 'is rejected  \n')} 
+          }
+    
+    }
 
       step2subsets=step2subsets[!is.na(step2subsets)] #Step 2 subsets will be of length a-1
 
@@ -230,10 +238,19 @@ if(exit==FALSE){
      if (test[3]==1){testpval=base$pvalBNP}
      if (test[4]==1){testpval=base$pvalWL}
      
-     if( testpval >= alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{nonsigfactorsubsets[[i]]=NA}
-     if( testpval < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{sigfactorsubsets[[i]]=NA}
-     if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
-   }
+     #p-value is multiplied by a/k if a>3 , where k is the dimension of the subset being tested
+     k=length(subsetstotest)
+     if(a>3){
+            if( testpval*(a/k) >= alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{nonsigfactorsubsets[[i]]=NA}
+            if( testpval*(a/k) < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{sigfactorsubsets[[i]]=NA}
+            if( testpval*(a/k) < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
+     }else{
+            if( testpval >= alpha) {nonsigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{nonsigfactorsubsets[[i]]=NA}
+            if( testpval < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else{sigfactorsubsets[[i]]=NA}
+            if( testpval< alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
+     }
+  
+  }
    nonsigfactorsubsets=nonsigfactorsubsets[!is.na(nonsigfactorsubsets)]
    sigfactorsubsets=sigfactorsubsets[!is.na(sigfactorsubsets)]
   
@@ -330,9 +347,18 @@ for(l in 1:(a-4)) {  #We only run from 1:(a-4) because we are checking subsets o
      if (test[3]==1){testpval=base$pvalBNP}
      if (test[4]==1){testpval=base$pvalWL}
      
-     if( testpval >= alpha) {nonsigfactorsubsets.new[[i]]=levels(subsetframe[,groupvarsub])}else {nonsigfactorsubsets.new[[i]]=NA}
-     if( testpval < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {sigfactorsubsets[[i]]=NA}
-     if( testpval < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
+     #p-value is multiplied by a/k, if a>3 where k is the dimension of the subset being tested
+     k=length(subsetstotest)
+     if(a>3){
+            if( testpval*(a/k)  >= alpha) {nonsigfactorsubsets.new[[i]]=levels(subsetframe[,groupvarsub])}else {nonsigfactorsubsets.new[[i]]=NA}
+            if( testpval*(a/k)  < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {sigfactorsubsets[[i]]=NA}
+            if( testpval*(a/k)  < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
+     }else{
+       if( testpval  >= alpha) {nonsigfactorsubsets.new[[i]]=levels(subsetframe[,groupvarsub])}else {nonsigfactorsubsets.new[[i]]=NA}
+       if( testpval  < alpha) {sigfactorsubsets[[i]]=levels(subsetframe[,groupvarsub])}else {sigfactorsubsets[[i]]=NA}
+       if( testpval  < alpha) {cat('The Hypothesis of equality between factor levels ', newsubsets[[i]], 'is rejected \n')}
+       
+     }
     }
    
     nonsigfactorsubsets.new=nonsigfactorsubsets.new[!is.na(nonsigfactorsubsets.new)]

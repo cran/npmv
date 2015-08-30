@@ -1,2 +1,6 @@
 export(nonpartest,ssnonpartest)
 import('Formula')
+importFrom("grDevices", "devAskNewPage")
+importFrom("graphics", "boxplot", "points")
+importFrom("methods", "is")
+importFrom("stats", "model.frame", "pf")

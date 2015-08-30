@@ -187,10 +187,15 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
          perms[i,4] <- permout$FWL
       }
 
+#         pvalanovperm <- as.numeric(format.pval((sum(as.numeric(perms[,1]>Fanova))/permreps),esp=0.0001))
+#         pvalLHperm   <- as.numeric(format.pval((sum(as.numeric(perms[,2]>FLH))/permreps),esp=0.0001))
+#         pvalBNPperm  <- as.numeric(format.pval((sum(as.numeric(perms[,3]>FBNP))/permreps),esp=0.0001))
+#         pvalWLperm   <- as.numeric(format.pval((sum(as.numeric(perms[,4]>FWL))/permreps),esp=0.0001))
+
       pvalanovperm <- sum(as.numeric(perms[,1]>Fanova))/permreps
       pvalLHperm   <- sum(as.numeric(perms[,2]>FLH))/permreps
       pvalBNPperm  <- sum(as.numeric(perms[,3]>FBNP))/permreps
-      pvalWLperm       <- sum(as.numeric(perms[,4]>FWL))/permreps
+      pvalWLperm   <- sum(as.numeric(perms[,4]>FWL))/permreps
       
       results=matrix(c(Fanova,FLH,FBNP,FWL,df1anova,df1LH,df1BNP,df1WL,df2anova,df2LH,df2BNP,df2WL,pvalanova,pvalLH,pvalBNP,pvalWL,pvalanovperm,pvalLHperm,pvalBNPperm,pvalWLperm),ncol=5)
       results=data.frame(results,row.names=c('ANOVA type test p-value','McKeon approx. for the Lawley Hotelling Test','Muller approx. for the Bartlett-Nanda-Pillai Test',
@@ -206,8 +211,9 @@ nonpartest <- function(formula,data,permtest=TRUE,permreps=10000,plots=TRUE,test
 
    results[,1] <- round(as.numeric(results[,1]),digits=3)
    results[,2] <- round(as.numeric(results[,2]),digits=3)
-   results[,3] <- round(as.numeric(results[,3]),digits=3)
-   results[,4] <- round(as.numeric(results[,4]),digits=3)
+   results[,3] <- round(as.numeric(results[,3]),digits=4)
+#  results[,3] <- as.numeric(format.pval(results[,4],esp=0.0001))
+    results[,4] <- round(as.numeric(results[,4]),digits=3)
 
    if(releffects){
       if(a == 2){

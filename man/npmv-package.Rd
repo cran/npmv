@@ -10,8 +10,8 @@ Performs analysis of one-way multivariate data using nonparametric techniques de
 \tabular{ll}{
 Package: \tab npmv\cr
 Type: \tab Package\cr
-Version: \tab 2.3\cr
-Date: \tab 2015-08-24\cr
+Version: \tab 2.4\cr
+Date: \tab 2017-01-08\cr
 License: \tab GPL-2\cr
 }
 This package provides the R functions nonpartest and ssnonpartest to compute nonparametric test statistics. The function nonpartest computes the global nonparametric test statistics, their permutation test analogs, and calculates nonparametric relative effects. The function ssnonpartest performs an all-subset algorithm to determine which variables cause significant effects, and between which factor levels. See the examples below for some basic uses and look in the help pages for each function for a much more detailed look.
@@ -26,7 +26,12 @@ Maintainer: Amanda Ellis <arelli4@uky.edu>
 Arne C. Bathke , Solomon W. Harrar, and Laurence V. 
 Madden. "How to compare small multivariate samples 
 using nonparametric tests," Computational Statistics 
-and Data Analysis 52 (2008) 4951-4965 
+and Data Analysis 52 (2008) 4951-4965
+
+Woodrow W. Burchett, Amanda R. Ellis, Solomon W. Harrar, 
+Arne C. Bathke (2017). "Nonparametric Inference for 
+Multivariate Data: The R Package npmv.,"
+Journal of Statistical Software, 76(4), 1-18.
 
 Brunner E, Domhof S, Langer F (2002), 
 Nonparametric Analysis of Longitudinal Data in Factorial 

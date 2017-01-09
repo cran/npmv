@@ -1,0 +1,26 @@
+bibentry(bibtype = "Article",
+  title        = "Nonparametric Inference for Multivariate Data: The {R} Package {npmv}",
+  author       = c(person(given = c("Woodrow", "W."),
+                          family = "Burchett"),
+                   person(given = c("Amanda", "R."),
+                          family = "Ellis"),
+                   person(given = c("Solomon", "W."),
+                          family = "Harrar"),
+                   person(given = c("Arne", "C."),
+                          family = "Bathke",
+                          email = "Arne.Bathke@sbg.ac.at")),
+  journal      = "Journal of Statistical Software",
+  year         = "2017",
+  volume       = "76",
+  number       = "4",
+  pages        = "1--18",
+  doi          = "10.18637/jss.v076.i04",
+
+  header       = "To cite npmv in publications use:",
+  textVersion  =
+  paste("Woodrow W. Burchett, Amanda R. Ellis, Solomon W. Harrar, Arne C. Bathke (2017).",
+        "Nonparametric Inference for Multivariate Data: The R Package npmv.",
+        "Journal of Statistical Software, 76(4), 1-18.",
+        "doi:10.18637/jss.v076.i04")
+)
+

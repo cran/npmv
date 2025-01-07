@@ -61,44 +61,62 @@ Woodrow Burchett, Amanda Ellis, Arne Bathke
 }
 \note{
 We define (for simplicity, only the formula for the balanced case is given here, the unbalanced case is given in the literature):
-\[H=(1/(a-1))*sum_{i=1}^a n (Rbar_{i .}-Rbar_{..})(Rbar_{i.}-Rbar_{..})' \]
-\[G=(1/(N-1))*sum_{i=1}^a sum_{j=1}^n(R_{ij}-Rbar_{i.})(R_{ij}-Rbar_{i.})'\]
+
+\eqn{H=(1/(a-1))*\sum_{i=1}^a n (\bar{R}_{i .}-\bar{R}_{..})(\bar{R}_{i.}-\bar{R}_{..})' }
+
+\eqn{G=(1/(N-1))*\sum_{i=1}^a \sum_{j=1}^n(R_{ij}-\bar{R}_{i.})(R_{ij}-\bar{R}_{i.})'}
 
 The ANOVA Type statistic is given by:
-\[T_A= (tr(H)/tr(G))\]
-The distribution of T_A is approximated by an F distribution with fhat_1 and fhat_2 where:
-\[fhat_1=(tr(G)^2/tr(G^2))   and  fhat_2= (a^2)/((a-1)sum^a_{i=1}(1)/(n_i-1))* fhat_1
+\eqn{T_A=tr(H)/tr(G)}
+
+The distribution of \eqn{T_A} is approximated by an F distribution with \eqn{\hat{f}_1} and \eqn{\hat{f}_2} where:
+\eqn{\hat{f}_1=\frac{tr(G)^2}{tr(G^2)}}   
+and  
+\eqn{\hat{f}_2= \frac{a^2}{((a-1)\sum^a_{i=1}\frac{1}{n_i-1}}* \hat{f}_1}
 
 The Lawley Hotelling Type statistic is given by:
-\[U=tr[(a-1)H((N-a)G)^{-1}]\] Using the McKeon approximation the distribution of U is approximated by a "stretched" F distribution with degrees freedom K and D where:
-\[K=p(a-1)   and   D=4 + (K+2)/(B-1)\] and 
-\[B = ((N-p-2)(N-a-1))/((N-a-p)(N-a-p-n))\]
+\eqn{U=tr[(a-1)H((N-a)G)^{-1}]} 
+Using the McKeon approximation the distribution of U is approximated by a "stretched" F distribution with degrees freedom K and D where:
+
+\eqn{K=p(a-1)}   and   
+
+\eqn{D=4 + (K+2)/(B-1)} and 
+
+\eqn{B = ((N-p-2)(N-a-1))/((N-a-p)(N-a-p-n))}
 
 The Bartlett Nanda Pillai Type statistic is given by:
- \[V= tr\{(a-1)H[(a-1)H+(N-a)G]^{-1}\}\] 
- McKeon approximated the distribution of ((V/gamma)/nu_1)/((1-V/gamma)/nu_2) using an F distribution with degrees freedom nu_1 and nu_2 where:
- \[ gamma=min(a-1,p)\] 
-\[ nu_1=(p(a-1))/(gamma(N-1))*[(gamma(N-a+gamma-p)(N-1))/((N-a)(N-p))-2]\]
-\[ nu_2=(N-a+gamma-p)/(N)*[(gamma(N-a+ gamma-p)(N-1))/((N-a)(N-p))-2]\]
+\eqn{V= tr\{(a-1)H[(a-1)H+(N-a)G]^{-1}\}} 
+ McKeon approximated the distribution of 
+ \eqn{((V/\gamma)/\nu_1)/((1-V/\gamma)/\nu_2)} using an F distribution with degrees freedom \eqn{\nu_1} and \eqn{\nu_2} where:
+\eqn{ \gamma=min(a-1,p)}
+
+\eqn{ \nu_1=(p(a-1))/(\gamma(N-1))*[(\gamma(N-a+\gamma-p)(N-2)(N-1))/((N-a)(N-p))-2]}
+
+\eqn{ \nu_2=(N-a+\gamma-p)/(N)*[(\gamma(N-a+ \gamma-p)(N-1))/((N-a)(N-p))-2]}
 
 The Wilks' Lambda Type Statistic is given by
-\[ lambda=det(((N-a)*G )/( (N-a)*G+(a-1)*H ) \]
-The F approximation statistic is given by
-\[F_lambda=[(1-lambda^{1/t})/(lambda^{1/t})](df_2/df_1)\]
-where
-\[df_1 = p(a - 1) and  df_2 = r t - (p(a - 1) - 2)/2\]
-and
-\[r=(N-a)-(p-(a-1)+1)/2.\]
-If
-\[p(a-1)=2 then  t=1, else  t=sqrt{  (p^2(a-1)^2-4)/(p^2+(a-1)^2-5) }\]
-Note that regarding the above formula, there is a typo in the article Liu, Bathke, Harrar (2011).
-}
 
-\section{Warning}{
-The nonparametric methods implemented in the code have been developed for complete data with no missing values.  The code automatically produces a warning if there is missing data.
+\eqn{ \lambda=det(((N-a)*G )/( (N-a)*G+(a-1)*H ) }
+
+The F approximation statistic is given by
+
+\eqn{ F_\lambda=[(1-\lambda^{1/t})/(\lambda^{1/t})](df_2/df_1)}
+
+where
+
+\eqn{df_1 = p(a - 1)} and  \eqn{df_2 = r t - (p(a - 1) - 2)/2}
+and \eqn{r=(N-a)-(p-(a-1)+1)/2.}
+
+If
+\eqn{p(a-1)=2} then  t=1, else  \eqn{t=\sqrt{  (p^2(a-1)^2-4)/(p^2+(a-1)^2-5) }}
+
+Note that regarding the above formula, there is a typo in the article Liu, Bathke, Harrar (2011).
+
+Warning: The nonparametric methods implemented in the code have been developed for complete data with no missing values.  The code automatically produces a warning if there is missing data.
 
 Under certain conditions, the matrices H and G are singular (See literature for explanation of H and G), for example when the number of response variables exceeds the sample size.  When this happens, only the ANOVA type statistic can be computed. The code automatically produces a warning if H or G are singular.
 }
+
 
 \examples{
 data(sberry)
@@ -107,5 +125,4 @@ ssnonpartest(weight|bot|fungi|rating~treatment,sberry,test=c(1,0,0,0),alpha=.05,
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+

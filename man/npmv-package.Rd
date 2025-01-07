@@ -7,13 +7,7 @@
 Performs analysis of one-way multivariate data using nonparametric techniques developed since 2008. Allows for small samples and ordinal variables, or even mixture of the different variable types ordinal, quantitative, binary. Using F-approximations for ANOVA Type, Wilks' Lambda Type, Lawley Hotelling Type, and Bartlett Nanda Pillai Type test statics, as well as a permutation test for each, the package compares the multivariate distributions of the different samples. Also computes nonparametric relative effects and produces plots.
 }
 \details{
-\tabular{ll}{
-Package: \tab npmv\cr
-Type: \tab Package\cr
-Version: \tab 2.4\cr
-Date: \tab 2017-01-08\cr
-License: \tab GPL-2\cr
-}
+
 This package provides the R functions nonpartest and ssnonpartest to compute nonparametric test statistics. The function nonpartest computes the global nonparametric test statistics, their permutation test analogs, and calculates nonparametric relative effects. The function ssnonpartest performs an all-subset algorithm to determine which variables cause significant effects, and between which factor levels. See the examples below for some basic uses and look in the help pages for each function for a much more detailed look.
 }
 \author{
